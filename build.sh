@@ -7,7 +7,7 @@
 set -e
 
 if [[ -z "${NAME}" ]]; then
-    NAME="sacredbanana/amiga-compiler"
+    NAME="fkhannouf/amiga-compiler"
 fi
 
 if [[ "${PUSH}" == "1" ]]; then
@@ -18,7 +18,8 @@ if [[ "${PUSH}" == "1" ]]; then
   docker buildx build --platform linux/amd64,linux/arm64 -t ${NAME}:ppc-morphos --rm -f Dockerfile.ppc-morphos --push .
   docker buildx rm amigasdkbuilder
 else
-  docker build -t ${NAME}:m68k-amigaos --rm -f Dockerfile.m68k-amigaos .
-  docker build -t ${NAME}:ppc-amigaos --rm -f Dockerfile.ppc-amigaos .
-  docker build -t ${NAME}:ppc-morphos --rm -f Dockerfile.ppc-morphos .
+#  docker build -t ${NAME}:m68k-amigaos --rm -f Dockerfile.m68k-amigaos .
+#  docker build -t ${NAME}:ppc-amigaos --rm -f Dockerfile.ppc-amigaos .
+#  docker build -t ${NAME}:ppc-morphos --rm -f Dockerfile.ppc-morphos .
+  docker build -t ${NAME}:amiga-unified --rm -f Dockerfile.amiga-unified .
 fi

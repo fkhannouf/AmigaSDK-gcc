@@ -1,0 +1,55 @@
+# Docker Image unifié pour les toolchains m68k-amigaos, ppc-amigaos et ppc-morphos
+# Utilise les images officielles amigadev/crosstools comme base
+
+# Étape 1: Image de base avec outils communs
+# Utilisation d'une version plus récente pour la compatibilité GLIBC
+FROM ubuntu:24.04 as base
+
+# Installation des dépendances communes
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    flex \
+    bison \
+    git \
+    wget \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Création de la structure de répertoires
+RUN mkdir -p /tools /opt/amiga
+WORKDIR /work
+
+# Étape 2: Ajout du toolchain m68k-amigaos
+FROM amigadev/crosstools:m68k-amigaos as m68k-stage
+
+# Étape 3: Ajout du toolchain ppc-amigaos  
+FROM amigadev/crosstools:ppc-amigaos as ppc-amigaos-stage
+
+# Étape 4: Ajout du toolchain ppc-morphos
+FROM amigadev/crosstools:ppc-morphos as ppc-morphos-stage
+
+# Étape finale: Combinaison de tous les toolchains
+FROM base
+
+# Copie des SDKs dans la structure attendue
+COPY ./amigaos3/sdk/ /tools/
+COPY ./amigaos4/sdk/ /tools/
+COPY ./morphos/sdk/ /tools/
+
+# Copie des toolchains depuis les images intermédiaires
+COPY --from=m68k-stage /opt/m68k-amigaos /opt/m68k-amigaos
+COPY --from=ppc-amigaos-stage /opt/ppc-amigaos /opt/ppc-amigaos  
+COPY --from=ppc-morphos-stage /opt/ppc-morphos /opt/ppc-morphos
+
+# Suppression du fichier translator.h original pour m68k-amigaos
+RUN rm /tools/m68k-amigaos/ndk-include/inline/translator.h \
+    && rm /tools/m68k-amigaos/ndk-include/clib/translator_protos.h
+
+# Création des liens symboliques (compatible avec les images originales)
+RUN ln -s /tools/ /opt/amiga
+
+# Configuration des variables d'environnement
+ENV FLEXCAT_SDDIR=/opt/amiga/lib/flexcat
+ENV PATH="/opt/amiga/bin:/opt/m68k-amigaos/bin:/opt/ppc-amigaos/bin:/opt/ppc-morphos/bin:${PATH}"
+
+CMD exec /bin/bash -c "trap : TERM INT; sleep infinity & wait"
